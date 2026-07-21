@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   audit:
@@ -23,6 +23,7 @@ jobs:
     env:
       SHARD: ${{ matrix.shard }}
       TOTAL_SHARDS: 10
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,6 +36,17 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run audit shard
         run: python audit.py
+      - name: Save shard results to repository
+        shell: bash
+        run: |
+          for f in results/*; do
+            name=$(basename "$f")
+            encoded=$(base64 -w 0 "$f")
+            gh api --method PUT "/repos/${GITHUB_REPOSITORY}/contents/audit-results/${name}" \
+              -f message="Save Naver audit shard ${SHARD}: ${name}" \
+              -f content="$encoded" \
+              -f branch="main"
+          done
       - name: Upload result shard
         uses: actions/upload-artifact@v4
         with:
