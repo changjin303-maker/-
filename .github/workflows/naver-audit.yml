@@ -7,6 +7,13 @@ on:
       - keywords.json
       - audit.py
       - .github/workflows/naver-audit.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - audit-trigger.txt
+      - keywords.json
+      - audit.py
+      - .github/workflows/naver-audit.yml
   workflow_dispatch:
 
 permissions:
@@ -37,6 +44,7 @@ jobs:
       - name: Run audit shard
         run: python audit.py
       - name: Save shard results to repository
+        if: github.event_name == 'push'
         shell: bash
         run: |
           for f in results/*; do
